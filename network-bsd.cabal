@@ -1,5 +1,5 @@
 name:           network-bsd
-version:        2.8.0.0
+version:        3.0.0.0
 license:        BSD3
 license-file:   LICENSE
 maintainer:     Kazu Yamamoto
@@ -8,10 +8,6 @@ description:
   The network package version 2 provides Network.BSD but
   it is removed from version 3.
   This module provides Network.BSD split from the network package.
-  .
-  Version 2.8 (unlike the following versions) is a dummy package that
-  prevents module name clashes between network-bsd and network.
-  .
   If Network.BSD is necessary, add network-bsd to dependencies.
   .
   > library
@@ -33,8 +29,15 @@ description:
   >                  , network-bsd
   .
 category:       Network
-build-type:     Simple
+build-type:     Configure
 cabal-version:  >=1.8
+extra-tmp-files:
+  config.log config.status autom4te.cache network-bsd.buildinfo
+  include/HsNetworkConfig.h
+extra-source-files:
+  config.guess config.sub install-sh
+  configure.ac configure network-bsd.buildinfo.in
+  include/HsNetworkConfig.h.in include/HsNet.h include/HsNetDef.h
 homepage:       https://github.com/haskell/network-bsd
 bug-reports:    https://github.com/haskell/network-bsd/issues
 tested-with:   GHC == 7.8.4
@@ -44,7 +47,12 @@ tested-with:   GHC == 7.8.4
              , GHC == 8.4.3
 
 library
-  build-depends: network < 3
+  exposed-modules: Network.BSD
+  build-depends: base
+               , network >= 3
+  include-dirs: include
+  includes: HsNet.h HsNetDef.h
+  install-includes: HsNet.h HsNetDef.h
   ghc-options: -Wall
 
 source-repository head
