@@ -1,36 +1,43 @@
+cabal-version:  1.12
 name:           network-bsd
-version:        3.0.0.0
+version:        2.8.0.1
 license:        BSD3
 license-file:   LICENSE
 maintainer:     Kazu Yamamoto
 synopsis:       Network.BSD
 description:
-  The network package version 2 provides Network.BSD but
-  it is removed from version 3.
-  This module provides Network.BSD split from the network package.
-  If Network.BSD is necessary, add network-bsd to dependencies.
+  The @network@ package version 2.* series provides "Network.BSD" but
+  it is removed starting with @network@ version 3.0.
+  .
+  This package provides the "Network.BSD" module split off from the
+  <https://hackage.haskell.org/package/network network package>.
+  .
+  If in addition to the @network@'s modules also "Network.BSD" is
+  necessary, add @network-bsd@ to your dependencies like so:
   .
   > library
-  >     build-depends: network
-  >                  , network-bsd
+  >     build-depends: network     >= 2.7 && < 3.1
+  >                  , network-bsd >= 2.7 && < 2.9
   .
-  You can control the version of the network package.
+  I.e. you can control the version of the @network@ package
+  independently.
   .
-  Example 1:
+  __NOTE__: Starting with version @network-bsd-2.8.0.1@ this package
+  requires @network >= 3@ in order to avoid module name clashes with
+  @network < 3@'s "Network.BSD" module.
   .
-  > library
-  >     build-depends: network >= 3
-  >                  , network-bsd
-  .
-  Example 2:
-  .
-  > library
-  >     build-depends: network >= 2.7 && < 3
-  >                  , network-bsd
-  .
+  However, @network-bsd-2.7.0.0@ and @network-bsd-2.8.0.0@ passes thru
+  the "Network.BSD" module from @network-2.7.*@ and @network-2.8.*@
+  respectively in a non-clashing way via Cabal's
+  <https://www.haskell.org/cabal/users-guide/developing-packages.html#pkg-field-library-reexported-modules reexported-modules>
+  feature while ensuring a well-defined
+  <https://pvp.haskell.org/ API versioning> of the observable API of
+  @network-bsd@. This is why the example above supporting a wide range
+  of @network@ versions works by including version 2.7.0.0 in the
+  required version range of @network-bsd@.
+
 category:       Network
 build-type:     Configure
-cabal-version:  >=1.8
 extra-tmp-files:
   config.log config.status autom4te.cache network-bsd.buildinfo
   include/HsNetworkConfig.h
@@ -44,12 +51,16 @@ tested-with:   GHC == 7.8.4
              , GHC == 7.10.3
              , GHC == 8.0.2
              , GHC == 8.2.2
-             , GHC == 8.4.3
+             , GHC == 8.4.4
+             , GHC == 8.6.2
 
 library
+  default-language: Haskell2010
+  other-extensions: CPP, NondecreasingIndentation
   exposed-modules: Network.BSD
-  build-depends: base
-               , network >= 3
+  build-depends: base    >= 4.7 && < 5
+               , network >= 3 && < 3.1
+  build-tools: hsc2hs >= 0.67 && < 0.69
   include-dirs: include
   includes: HsNet.h HsNetDef.h
   install-includes: HsNet.h HsNetDef.h
