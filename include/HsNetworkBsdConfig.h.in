@@ -1,4 +1,4 @@
-/* include/HsNetworkConfig.h.in.  Generated from configure.ac by autoheader.  */
+/* include/HsNetworkBsdConfig.h.in.  Generated from configure.ac by autoheader.  */
 
 /* Define to 1 if you have the `accept4' function. */
 #undef HAVE_ACCEPT4

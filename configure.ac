@@ -20,9 +20,9 @@ ac_includes_default="$ac_includes_default
 #endif"
 
 # Safety check: Ensure that we are in the correct source directory.
-AC_CONFIG_SRCDIR([include/HsNet.h])
+AC_CONFIG_SRCDIR([include/HsNetBsd.h])
 
-AC_CONFIG_HEADERS([include/HsNetworkConfig.h])
+AC_CONFIG_HEADERS([include/HsNetworkBsdConfig.h])
 
 AC_CANONICAL_HOST
 

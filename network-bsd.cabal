@@ -1,6 +1,6 @@
 cabal-version:  1.12
 name:           network-bsd
-version:        2.8.0.1
+version:        2.8.0.10
 license:        BSD3
 license-file:   LICENSE
 maintainer:     Kazu Yamamoto
@@ -22,7 +22,7 @@ description:
   I.e. you can control the version of the @network@ package
   independently.
   .
-  __NOTE__: Starting with version @network-bsd-2.8.0.1@ this package
+  __NOTE__: Starting with version @network-bsd-2.8.0.10@ this package
   requires @network >= 3@ in order to avoid module name clashes with
   @network < 3@'s "Network.BSD" module.
   .
@@ -40,11 +40,11 @@ category:       Network
 build-type:     Configure
 extra-tmp-files:
   config.log config.status autom4te.cache network-bsd.buildinfo
-  include/HsNetworkConfig.h
+  include/HsNetworkBsdConfig.h
 extra-source-files:
   config.guess config.sub install-sh
   configure.ac configure network-bsd.buildinfo.in
-  include/HsNetworkConfig.h.in include/HsNet.h include/HsNetDef.h
+  include/HsNetworkBsdConfig.h.in include/HsNetBsd.h include/HsNetBsdDef.h
 homepage:       https://github.com/haskell/network-bsd
 bug-reports:    https://github.com/haskell/network-bsd/issues
 tested-with:   GHC == 7.8.4
@@ -62,9 +62,13 @@ library
                , network >= 3 && < 3.1
   build-tools: hsc2hs >= 0.67 && < 0.69
   include-dirs: include
-  includes: HsNet.h HsNetDef.h
-  install-includes: HsNet.h HsNetDef.h
+  includes: HsNetBsd.h HsNetBsdDef.h
+  install-includes: HsNetBsd.h HsNetBsdDef.h
   ghc-options: -Wall
+
+  if os(windows) && impl(ghc >= 7.10)
+    -- See https://github.com/haskell/network/pull/362
+    cpp-options: -D_WIN32_WINNT=0x0600
 
 source-repository head
   type:     git

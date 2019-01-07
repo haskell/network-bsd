@@ -1,9 +1,10 @@
 {-# LANGUAGE CPP, NondecreasingIndentation #-}
+
 -----------------------------------------------------------------------------
 -- |
 -- Module      :  Network.BSD
 -- Copyright   :  (c) The University of Glasgow 2001
--- License     :  BSD-style (see the file libraries/network/LICENSE)
+-- SPDX-License-Identifier: BSD-3-Clause
 --
 -- Maintainer  :  libraries@haskell.org
 -- Stability   :  experimental
@@ -14,13 +15,13 @@
 --
 -----------------------------------------------------------------------------
 
-#include "HsNet.h"
-##include "HsNetDef.h"
+#include "HsNetBsd.h"
+##include "HsNetBsdDef.h"
 
 module Network.BSD
     (
     -- * Host names
-      HostName
+      N.HostName
     , getHostName
 
     , HostEntry(..)
@@ -39,7 +40,7 @@ module Network.BSD
 
     -- * Service names
     , ServiceEntry(..)
-    , ServiceName
+    , N.ServiceName
     , getServiceByName
     , getServiceByPort
     , getServicePortNumber
@@ -55,12 +56,12 @@ module Network.BSD
 
     -- * Protocol names
     , ProtocolName
-    , ProtocolNumber
+    , N.ProtocolNumber
     , ProtocolEntry(..)
     , getProtocolByName
     , getProtocolByNumber
     , getProtocolNumber
-    , defaultProtocol
+    , N.defaultProtocol
 
 #if !defined(mingw32_HOST_OS)
     , getProtocolEntries
@@ -71,7 +72,7 @@ module Network.BSD
 #endif
 
     -- * Port numbers
-    , PortNumber
+    , N.PortNumber
 
     -- * Network names
     , NetworkName
@@ -95,7 +96,7 @@ module Network.BSD
 
     ) where
 
-import Network.Socket hiding (ifNameToIndex)
+import qualified Network.Socket as N
 
 import Control.Concurrent (MVar, newMVar, withMVar)
 import qualified Control.Exception as E
@@ -139,9 +140,9 @@ type ProtocolName = String
 
 data ServiceEntry  =
   ServiceEntry  {
-     serviceName     :: ServiceName,    -- Official Name
-     serviceAliases  :: [ServiceName],  -- aliases
-     servicePort     :: PortNumber,     -- Port Number  ( network byte order )
+     serviceName     :: N.ServiceName,    -- Official Name
+     serviceAliases  :: [N.ServiceName],  -- aliases
+     servicePort     :: N.PortNumber,     -- Port Number  ( network byte order )
      serviceProtocol :: ProtocolName    -- Protocol
   } deriving (Show, Typeable)
 
@@ -173,7 +174,7 @@ instance Storable ServiceEntry where
 
 
 -- | Get service by name.
-getServiceByName :: ServiceName         -- Service Name
+getServiceByName :: N.ServiceName         -- Service Name
                  -> ProtocolName        -- Protocol Name
                  -> IO ServiceEntry     -- Service Entry
 getServiceByName name proto = withLock $ do
@@ -187,7 +188,7 @@ foreign import CALLCONV unsafe "getservbyname"
   c_getservbyname :: CString -> CString -> IO (Ptr ServiceEntry)
 
 -- | Get the service given a 'PortNumber' and 'ProtocolName'.
-getServiceByPort :: PortNumber -> ProtocolName -> IO ServiceEntry
+getServiceByPort :: N.PortNumber -> ProtocolName -> IO ServiceEntry
 getServiceByPort port proto = withLock $ do
  withCString proto $ \ cstr_proto -> do
  throwNoSuchThingIfNull "Network.BSD.getServiceByPort" "no such service entry"
@@ -197,8 +198,8 @@ getServiceByPort port proto = withLock $ do
 foreign import CALLCONV unsafe "getservbyport"
   c_getservbyport :: CInt -> CString -> IO (Ptr ServiceEntry)
 
--- | Get the 'PortNumber' corresponding to the 'ServiceName'.
-getServicePortNumber :: ServiceName -> IO PortNumber
+-- | Get the 'PortNumber' corresponding to the 'N.ServiceName'.
+getServicePortNumber :: N.ServiceName -> IO N.PortNumber
 getServicePortNumber name = do
     (ServiceEntry _ _ port _) <- getServiceByName name "tcp"
     return port
@@ -244,7 +245,7 @@ data ProtocolEntry =
   ProtocolEntry  {
      protoName    :: ProtocolName,      -- Official Name
      protoAliases :: [ProtocolName],    -- aliases
-     protoNumber  :: ProtocolNumber     -- Protocol Number
+     protoNumber  :: N.ProtocolNumber     -- Protocol Number
   } deriving (Read, Show, Typeable)
 
 instance Storable ProtocolEntry where
@@ -285,7 +286,7 @@ foreign import  CALLCONV unsafe  "getprotobyname"
    c_getprotobyname :: CString -> IO (Ptr ProtocolEntry)
 
 
-getProtocolByNumber :: ProtocolNumber -> IO ProtocolEntry
+getProtocolByNumber :: N.ProtocolNumber -> IO ProtocolEntry
 getProtocolByNumber num = withLock $ do
  throwNoSuchThingIfNull "Network.BSD.getProtocolByNumber" ("no such protocol number: " ++ show num)
    $ c_getprotobynumber (fromIntegral num)
@@ -295,7 +296,7 @@ foreign import CALLCONV unsafe  "getprotobynumber"
    c_getprotobynumber :: CInt -> IO (Ptr ProtocolEntry)
 
 
-getProtocolNumber :: ProtocolName -> IO ProtocolNumber
+getProtocolNumber :: ProtocolName -> IO N.ProtocolNumber
 getProtocolNumber proto = do
  (ProtocolEntry _ _ num) <- getProtocolByName proto
  return num
@@ -330,10 +331,10 @@ getProtocolEntries stayOpen = withLock $ do
 
 data HostEntry =
   HostEntry  {
-     hostName      :: HostName,         -- Official Name
-     hostAliases   :: [HostName],       -- aliases
-     hostFamily    :: Family,           -- Host Type (currently AF_INET)
-     hostAddresses :: [HostAddress]     -- Set of Network Addresses  (in network byte order)
+     hostName      :: N.HostName,         -- Official Name
+     hostAliases   :: [N.HostName],       -- aliases
+     hostFamily    :: N.Family,           -- Host Type (currently AF_INET)
+     hostAddresses :: [N.HostAddress]     -- Set of Network Addresses  (in network byte order)
   } deriving (Read, Show, Typeable)
 
 instance Storable HostEntry where
@@ -354,9 +355,9 @@ instance Storable HostEntry where
                         hostName       = h_name,
                         hostAliases    = h_aliases,
 #if defined(HAVE_WINSOCK2_H)
-                        hostFamily     = unpackFamily (fromIntegral (h_addrtype :: CShort)),
+                        hostFamily     = N.unpackFamily (fromIntegral (h_addrtype :: CShort)),
 #else
-                        hostFamily     = unpackFamily h_addrtype,
+                        hostFamily     = N.unpackFamily h_addrtype,
 #endif
                         hostAddresses  = h_addr_list
                 })
@@ -365,7 +366,7 @@ instance Storable HostEntry where
 
 
 -- convenience function:
-hostAddress :: HostEntry -> HostAddress
+hostAddress :: HostEntry -> N.HostAddress
 hostAddress (HostEntry nm _ _ ls) =
  case ls of
    []    -> error $ "Network.BSD.hostAddress: empty network address list for " ++ nm
@@ -374,8 +375,8 @@ hostAddress (HostEntry nm _ _ ls) =
 -- getHostByName must use the same lock as the *hostent functions
 -- may cause problems if called concurrently.
 
--- | Resolve a 'HostName' to IPv4 address.
-getHostByName :: HostName -> IO HostEntry
+-- | Resolve a 'N.HostName' to IPv4 address.
+getHostByName :: N.HostName -> IO HostEntry
 getHostByName name = withLock $ do
   withCString name $ \ name_cstr -> do
    ent <- throwNoSuchThingIfNull "Network.BSD.getHostByName" "no such host entry"
@@ -389,15 +390,15 @@ foreign import CALLCONV safe "gethostbyname"
 -- The locking of gethostbyaddr is similar to gethostbyname.
 -- | Get a 'HostEntry' corresponding to the given address and family.
 -- Note that only IPv4 is currently supported.
-getHostByAddr :: Family -> HostAddress -> IO HostEntry
+getHostByAddr :: N.Family -> N.HostAddress -> IO HostEntry
 getHostByAddr family addr = do
  with addr $ \ ptr_addr -> withLock $ do
  throwNoSuchThingIfNull "Network.BSD.getHostByAddr" "no such host entry"
-   $ c_gethostbyaddr ptr_addr (fromIntegral (sizeOf addr)) (packFamily family)
+   $ c_gethostbyaddr ptr_addr (fromIntegral (sizeOf addr)) (N.packFamily family)
  >>= peek
 
 foreign import CALLCONV safe "gethostbyaddr"
-   c_gethostbyaddr :: Ptr HostAddress -> CInt -> CInt -> IO (Ptr HostEntry)
+   c_gethostbyaddr :: Ptr N.HostAddress -> CInt -> CInt -> IO (Ptr HostEntry)
 
 #if defined(HAVE_GETHOSTENT) && !defined(mingw32_HOST_OS)
 getHostEntry :: IO HostEntry
@@ -439,7 +440,7 @@ data NetworkEntry =
   NetworkEntry {
      networkName        :: NetworkName,   -- official name
      networkAliases     :: [NetworkName], -- aliases
-     networkFamily      :: Family,         -- type
+     networkFamily      :: N.Family,         -- type
      networkAddress     :: NetworkAddr
    } deriving (Read, Show, Typeable)
 
@@ -457,8 +458,7 @@ instance Storable NetworkEntry where
         return (NetworkEntry {
                         networkName      = n_name,
                         networkAliases   = n_aliases,
-                        networkFamily    = unpackFamily (fromIntegral
-                                                        (n_addrtype :: CInt)),
+                        networkFamily    = N.unpackFamily (fromIntegral (n_addrtype :: CInt)),
                         networkAddress   = n_net
                 })
 
@@ -476,10 +476,10 @@ getNetworkByName name = withLock $ do
 foreign import ccall unsafe "getnetbyname"
    c_getnetbyname  :: CString -> IO (Ptr NetworkEntry)
 
-getNetworkByAddr :: NetworkAddr -> Family -> IO NetworkEntry
+getNetworkByAddr :: NetworkAddr -> N.Family -> IO NetworkEntry
 getNetworkByAddr addr family = withLock $ do
  throwNoSuchThingIfNull "Network.BSD.getNetworkByAddr" "no such network entry"
-   $ c_getnetbyaddr addr (packFamily family)
+   $ c_getnetbyaddr addr (N.packFamily family)
  >>= peek
 
 foreign import ccall unsafe "getnetbyaddr"
@@ -535,7 +535,7 @@ foreign import CALLCONV safe "if_nametoindex"
 
 {-# NOINLINE lock #-}
 lock :: MVar ()
-lock = unsafePerformIO $ withSocketsDo $ newMVar ()
+lock = unsafePerformIO $ N.withSocketsDo $ newMVar ()
 
 withLock :: IO a -> IO a
 withLock act = withMVar lock (\_ -> act)
@@ -546,7 +546,7 @@ withLock act = withMVar lock (\_ -> act)
 -- | Calling getHostName returns the standard host name for the current
 -- processor, as set at boot time.
 
-getHostName :: IO HostName
+getHostName :: IO N.HostName
 getHostName = do
   let size = 256
   allocaArray0 size $ \ cstr -> do

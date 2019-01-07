@@ -1,0 +1,4 @@
+/.ghc.environment.*
+/dist-*/
+/dist/
+/autom4te.cache/

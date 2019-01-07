@@ -1,7 +1,7 @@
 #ifndef HSNETDEF_H
 #define HSNETDEF_H
 
-#include "HsNetworkConfig.h"
+#include "HsNetworkBsdConfig.h"
 
 /* ultra-evil... */
 #undef PACKAGE_BUGREPORT

@@ -7,7 +7,7 @@
 #ifndef HSNET_H
 #define HSNET_H
 
-#include "HsNetDef.h"
+#include "HsNetBsdDef.h"
 
 #ifdef NEED_WINVER
 # define WINVER 0x0501
