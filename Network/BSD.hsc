@@ -15,8 +15,8 @@
 --
 -----------------------------------------------------------------------------
 
-#include "HsNetBsd.h"
-##include "HsNetBsdDef.h"
+#include "HsNet.h"
+##include "HsNetDef.h"
 
 module Network.BSD
     (
@@ -89,10 +89,8 @@ module Network.BSD
     , endNetworkEntry
 #endif
 
-#if defined(HAVE_IF_NAMETOINDEX)
     -- * Interface names
-    , ifNameToIndex
-#endif
+    , N.ifNameToIndex
 
     ) where
 
@@ -104,7 +102,7 @@ import Foreign.C.String (CString, peekCString, withCString)
 #if defined(HAVE_WINSOCK2_H)
 import Foreign.C.Types ( CShort )
 #endif
-import Foreign.C.Types ( CInt(..), CULong(..), CSize(..), CUInt(..) )
+import Foreign.C.Types ( CInt(..), CULong(..), CSize(..) )
 import Foreign.Ptr (Ptr, nullPtr)
 import Foreign.Storable (Storable(..))
 import Foreign.Marshal.Array (allocaArray0, peekArray0)
@@ -512,23 +510,6 @@ getNetworkEntries :: Bool -> IO [NetworkEntry]
 getNetworkEntries stayOpen = do
   setNetworkEntry stayOpen
   getEntries (getNetworkEntry) (endNetworkEntry)
-#endif
-
--- ---------------------------------------------------------------------------
--- Interface names
-
-#if defined(HAVE_IF_NAMETOINDEX)
-
--- returns the index of the network interface corresponding to the name ifname.
-ifNameToIndex :: String -> IO (Maybe Int)
-ifNameToIndex ifname = do
-  index <- withCString ifname c_if_nametoindex
-  -- On failure zero is returned. We'll return Nothing.
-  return $ if index == 0 then Nothing else Just $ fromIntegral index
-
-foreign import CALLCONV safe "if_nametoindex"
-   c_if_nametoindex :: CString -> IO CUInt
-
 #endif
 
 -- Mutex for name service lockdown
