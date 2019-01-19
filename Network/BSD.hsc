@@ -228,16 +228,22 @@ getServicePortNumber name = do
 
 -- | @getservent(3)@.
 getServiceEntry :: IO ServiceEntry
-getServiceEntry = withLock $ do
- throwNoSuchThingIfNull "Network.BSD.getServiceEntry" "no such service entry"
-   $ c_getservent
- >>= peek
+getServiceEntry = withLock getServiceEntry'
+
+getServiceEntry' :: IO ServiceEntry
+getServiceEntry' = do
+  throwNoSuchThingIfNull "Network.BSD.getServiceEntry" "no such service entry"
+    $ c_getservent
+  >>= peek
 
 foreign import ccall unsafe "getservent" c_getservent :: IO (Ptr ServiceEntry)
 
 -- | @setservent(3)@.
 setServiceEntry :: Bool -> IO ()
-setServiceEntry flg = withLock $ c_setservent (fromBool flg)
+setServiceEntry = withLock . setServiceEntry'
+
+setServiceEntry' :: Bool -> IO ()
+setServiceEntry' flg = c_setservent (fromBool flg)
 
 foreign import ccall unsafe  "setservent" c_setservent :: CInt -> IO ()
 
@@ -249,9 +255,9 @@ foreign import ccall unsafe  "endservent" c_endservent :: IO ()
 
 -- | Retrieve list of all 'ServiceEntry' via @getservent(3)@.
 getServiceEntries :: Bool -> IO [ServiceEntry]
-getServiceEntries stayOpen = do
-  setServiceEntry stayOpen
-  getEntries (getServiceEntry) (endServiceEntry)
+getServiceEntries stayOpen = withLock $ do
+  setServiceEntry' stayOpen
+  getEntries getServiceEntry' c_endservent
 #endif
 
 -- ---------------------------------------------------------------------------
@@ -336,16 +342,22 @@ getProtocolNumber proto = do
 #if !defined(mingw32_HOST_OS)
 -- | @getprotoent(3)@.
 getProtocolEntry :: IO ProtocolEntry    -- Next Protocol Entry from DB
-getProtocolEntry = withLock $ do
- ent <- throwNoSuchThingIfNull "Network.BSD.getProtocolEntry" "no such protocol entry"
-                $ c_getprotoent
- peek ent
+getProtocolEntry = withLock getProtocolEntry'
+
+getProtocolEntry' :: IO ProtocolEntry
+getProtocolEntry' = do
+  ent <- throwNoSuchThingIfNull "Network.BSD.getProtocolEntry" "no such protocol entry"
+           $ c_getprotoent
+  peek ent
 
 foreign import ccall unsafe  "getprotoent" c_getprotoent :: IO (Ptr ProtocolEntry)
 
 -- | @setprotoent(3)@.
 setProtocolEntry :: Bool -> IO ()       -- Keep DB Open ?
-setProtocolEntry flg = withLock $ c_setprotoent (fromBool flg)
+setProtocolEntry = withLock . setProtocolEntry'
+
+setProtocolEntry' :: Bool -> IO ()       -- Keep DB Open ?
+setProtocolEntry' flg = c_setprotoent (fromBool flg)
 
 foreign import ccall unsafe "setprotoent" c_setprotoent :: CInt -> IO ()
 
@@ -358,8 +370,9 @@ foreign import ccall unsafe "endprotoent" c_endprotoent :: IO ()
 -- | Retrieve list of all 'ProtocolEntry' via @getprotoent(3)@.
 getProtocolEntries :: Bool -> IO [ProtocolEntry]
 getProtocolEntries stayOpen = withLock $ do
-  setProtocolEntry stayOpen
-  getEntries (getProtocolEntry) (endProtocolEntry)
+  setProtocolEntry' stayOpen
+  getEntries getProtocolEntry' c_endprotoent
+
 #endif
 
 -- ---------------------------------------------------------------------------
@@ -447,16 +460,22 @@ foreign import CALLCONV safe "gethostbyaddr"
 #if defined(HAVE_GETHOSTENT) && !defined(mingw32_HOST_OS)
 -- | @gethostent(3)@.
 getHostEntry :: IO HostEntry
-getHostEntry = withLock $ do
- throwNoSuchThingIfNull "Network.BSD.getHostEntry" "unable to retrieve host entry"
-   $ c_gethostent
- >>= peek
+getHostEntry = withLock getHostEntry
+
+getHostEntry' :: IO HostEntry
+getHostEntry' = do
+  throwNoSuchThingIfNull "Network.BSD.getHostEntry" "unable to retrieve host entry"
+    $ c_gethostent
+  >>= peek
 
 foreign import ccall unsafe "gethostent" c_gethostent :: IO (Ptr HostEntry)
 
 -- | @sethostent(3)@.
 setHostEntry :: Bool -> IO ()
-setHostEntry flg = withLock $ c_sethostent (fromBool flg)
+setHostEntry = withLock . setHostEntry'
+
+setHostEntry' :: Bool -> IO ()
+setHostEntry' flg = c_sethostent (fromBool flg)
 
 foreign import ccall unsafe "sethostent" c_sethostent :: CInt -> IO ()
 
@@ -468,9 +487,10 @@ foreign import ccall unsafe "endhostent" c_endhostent :: IO ()
 
 -- | Retrieve list of all 'HostEntry' via @gethostent(3)@.
 getHostEntries :: Bool -> IO [HostEntry]
-getHostEntries stayOpen = do
-  setHostEntry stayOpen
-  getEntries (getHostEntry) (endHostEntry)
+getHostEntries stayOpen = withLock $ do
+  setHostEntry' stayOpen
+  getEntries getHostEntry' c_endhostent
+
 #endif
 
 -- ---------------------------------------------------------------------------
@@ -543,10 +563,13 @@ foreign import ccall unsafe "getnetbyaddr"
 
 -- | @getnetent(3)@.
 getNetworkEntry :: IO NetworkEntry
-getNetworkEntry = withLock $ do
- throwNoSuchThingIfNull "Network.BSD.getNetworkEntry" "no more network entries"
-          $ c_getnetent
- >>= peek
+getNetworkEntry = withLock getNetworkEntry'
+
+getNetworkEntry' :: IO NetworkEntry
+getNetworkEntry' = do
+  throwNoSuchThingIfNull "Network.BSD.getNetworkEntry" "no more network entries"
+    $ c_getnetent
+  >>= peek
 
 foreign import ccall unsafe "getnetent" c_getnetent :: IO (Ptr NetworkEntry)
 
@@ -556,7 +579,10 @@ foreign import ccall unsafe "getnetent" c_getnetent :: IO (Ptr NetworkEntry)
 --
 -- @setnetent(3)@.
 setNetworkEntry :: Bool -> IO ()
-setNetworkEntry flg = withLock $ c_setnetent (fromBool flg)
+setNetworkEntry = withLock . setNetworkEntry'
+
+setNetworkEntry' :: Bool -> IO ()
+setNetworkEntry' flg = c_setnetent (fromBool flg)
 
 foreign import ccall unsafe "setnetent" c_setnetent :: CInt -> IO ()
 
@@ -570,9 +596,9 @@ foreign import ccall unsafe "endnetent" c_endnetent :: IO ()
 
 -- | Get the list of network entries via @getnetent(3)@.
 getNetworkEntries :: Bool -> IO [NetworkEntry]
-getNetworkEntries stayOpen = do
-  setNetworkEntry stayOpen
-  getEntries (getNetworkEntry) (endNetworkEntry)
+getNetworkEntries stayOpen = withLock $ do
+  setNetworkEntry' stayOpen
+  getEntries getNetworkEntry' c_endnetent
 #endif
 
 -- Mutex for name service lockdown
