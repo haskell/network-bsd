@@ -11,8 +11,10 @@
 -- Portability :  non-portable
 --
 -- The "Network.BSD" module defines Haskell bindings to network
--- programming functionality (mostly network database functions)
+-- programming functionality (mostly [network database operations](http://pubs.opengroup.org/onlinepubs/9699919799/basedefs/netdb.h.html))
 -- provided by BSD Unix derivatives.
+--
+-- __NOTE__: Some of the types are reexported from "Network.Socket" in order to make the @network-bsd@ API self-contained.
 --
 -- == Windows compatibility
 --
@@ -205,7 +207,7 @@ getServiceByName name proto = withLock $ do
 foreign import CALLCONV unsafe "getservbyname"
   c_getservbyname :: CString -> CString -> IO (Ptr ServiceEntry)
 
--- | Get the service given a 'PortNumber' and 'ProtocolName'.
+-- | Get the service given a 'N.PortNumber' and 'ProtocolName'.
 getServiceByPort :: N.PortNumber -> ProtocolName -> IO ServiceEntry
 getServiceByPort port proto = withLock $ do
  withCString proto $ \ cstr_proto -> do
@@ -216,7 +218,7 @@ getServiceByPort port proto = withLock $ do
 foreign import CALLCONV unsafe "getservbyport"
   c_getservbyport :: CInt -> CString -> IO (Ptr ServiceEntry)
 
--- | Get the 'PortNumber' corresponding to the 'N.ServiceName'.
+-- | Get the 'N.PortNumber' corresponding to the 'N.ServiceName'.
 getServicePortNumber :: N.ServiceName -> IO N.PortNumber
 getServicePortNumber name = do
     (ServiceEntry _ _ port _) <- getServiceByName name "tcp"
@@ -406,6 +408,8 @@ instance Storable HostEntry where
 
 
 -- convenience function:
+-- | Convenience function extracting one address in a 'HostEntry'.
+-- Returns 'error' if 'HostEntry' contains no addresses.
 hostAddress :: HostEntry -> N.HostAddress
 hostAddress (HostEntry nm _ _ ls) =
  case ls of

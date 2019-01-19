@@ -4,8 +4,13 @@ version:        2.8.1.0
 license:        BSD3
 license-file:   LICENSE
 maintainer:     Kazu Yamamoto, Herbert Valerio Riedel
-synopsis:       Network.BSD
+synopsis:       POSIX network database (<netdb.h>) API
 description:
+  This package provides Haskell bindings to the
+  the [POSIX network database (<netdb.h>) API](http://pubs.opengroup.org/onlinepubs/009696699/basedefs/netdb.h.html).
+  .
+  === Relationship to the @network@ package
+  .
   The @network@ package version 2.* series provides "Network.BSD" but
   it is removed starting with @network@ version 3.0.
   .
