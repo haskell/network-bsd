@@ -112,7 +112,7 @@ import qualified Network.Socket as N
 import Control.Concurrent (MVar, newMVar, withMVar)
 import qualified Control.Exception as E
 import Foreign.C.String (CString, peekCString, withCString)
-#if defined(HAVE_WINSOCK2_H)
+#if defined(mingw32_HOST_OS)
 import Foreign.C.Types ( CShort )
 #endif
 import Foreign.C.Types ( CInt(..), CULong(..), CSize(..) )
@@ -172,7 +172,7 @@ instance Storable ServiceEntry where
         return (ServiceEntry {
                         serviceName     = s_name,
                         serviceAliases  = s_aliases,
-#if defined(HAVE_WINSOCK2_H)
+#if defined(mingw32_HOST_OS)
                         servicePort     = (fromIntegral (s_port :: CShort)),
 #else
                            -- s_port is already in network byte order, but it
@@ -275,7 +275,7 @@ instance Storable ProtocolEntry where
         p_aliases <- (#peek struct protoent, p_aliases) p
                            >>= peekArray0 nullPtr
                            >>= mapM peekCString
-#if defined(HAVE_WINSOCK2_H)
+#if defined(mingw32_HOST_OS)
          -- With WinSock, the protocol number is only a short;
          -- hoist it in as such, but represent it on the Haskell side
          -- as a CInt.
@@ -378,7 +378,7 @@ instance Storable HostEntry where
         return (HostEntry {
                         hostName       = h_name,
                         hostAliases    = h_aliases,
-#if defined(HAVE_WINSOCK2_H)
+#if defined(mingw32_HOST_OS)
                         hostFamily     = N.unpackFamily (fromIntegral (h_addrtype :: CShort)),
 #else
                         hostFamily     = N.unpackFamily h_addrtype,
