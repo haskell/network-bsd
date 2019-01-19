@@ -20,8 +20,9 @@
 
 module Network.BSD
     (
-    -- * Host names
+    -- * Host names and network addresses
       N.HostName
+    , N.HostAddress
     , getHostName
 
     , HostEntry(..)
