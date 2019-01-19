@@ -3,7 +3,7 @@ name:           network-bsd
 version:        2.8.1.0
 license:        BSD3
 license-file:   LICENSE
-maintainer:     Kazu Yamamoto
+maintainer:     Kazu Yamamoto, Herbert Valerio Riedel
 synopsis:       Network.BSD
 description:
   The @network@ package version 2.* series provides "Network.BSD" but
@@ -45,14 +45,17 @@ tested-with:   GHC == 7.8.4
              , GHC == 8.0.2
              , GHC == 8.2.2
              , GHC == 8.4.4
-             , GHC == 8.6.2
+             , GHC == 8.6.3
 
 library
   default-language: Haskell2010
   other-extensions: CPP, NondecreasingIndentation
   exposed-modules: Network.BSD
+  -- NB: `network-bsd` heavily relies on `network`'s exported CPP headers!
+  --     make sure that `network` doesn't inadvertently break/change its
+  --     CPP headers before advertising support for new versions of `network`.
   build-depends: base    >= 4.7 && < 5
-               , network >= 3 && < 3.1
+               , network >= 3.0.0.0 && < 3.1
   build-tools: hsc2hs >= 0.67 && < 0.69
   ghc-options: -Wall
 

@@ -1,0 +1,4 @@
+-- Cabal project configuration; for more details see
+-- https://www.haskell.org/cabal/users-guide/nix-local-build-overview.html
+
+packages: .
