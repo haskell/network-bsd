@@ -11,7 +11,19 @@
 -- Portability :  non-portable
 --
 -- The "Network.BSD" module defines Haskell bindings to network
--- programming functionality provided by BSD Unix derivatives.
+-- programming functionality (mostly network database functions)
+-- provided by BSD Unix derivatives.
+--
+-- == Windows compatibility
+--
+-- The following functions are not exported by "Network.BSD" on the
+-- Windows platform:
+--
+-- * 'getHostEntries', 'setHostEntry', 'getHostEntry', 'endHostEntry'
+-- * 'getServiceEntries', 'getServiceEntry', 'setServiceEntry', 'endServiceEntry'
+-- * 'getProtocolEntries', 'setProtocolEntry', 'getProtocolEntry', 'endProtocolEntry'
+-- * 'getNetworkByName', 'getNetworkByAddr', 'getNetworkEntries',
+--   'setNetworkEntry', 'getNetworkEntry', 'endNetworkEntry'
 --
 -----------------------------------------------------------------------------
 
@@ -137,12 +149,13 @@ type ProtocolName = String
 -- close the database a call to endServiceEntry is required.  This
 -- database file is usually stored in the file /etc/services.
 
+-- | Representation of the POSIX @servent@ structure defined in [<netdb.h>](http://pubs.opengroup.org/onlinepubs/9699919799/basedefs/netdb.h.html).
 data ServiceEntry  =
   ServiceEntry  {
-     serviceName     :: N.ServiceName,    -- Official Name
-     serviceAliases  :: [N.ServiceName],  -- aliases
-     servicePort     :: N.PortNumber,     -- Port Number  ( network byte order )
-     serviceProtocol :: ProtocolName    -- Protocol
+     serviceName     :: N.ServiceName,    -- ^ Official service name
+     serviceAliases  :: [N.ServiceName],  -- ^ aliases
+     servicePort     :: N.PortNumber,     -- ^ Port Number
+     serviceProtocol :: ProtocolName      -- ^ Protocol to use
   } deriving (Show, Typeable)
 
 instance Storable ServiceEntry where
@@ -204,6 +217,8 @@ getServicePortNumber name = do
     return port
 
 #if !defined(mingw32_HOST_OS)
+
+-- | @getservent(3)@.
 getServiceEntry :: IO ServiceEntry
 getServiceEntry = withLock $ do
  throwNoSuchThingIfNull "Network.BSD.getServiceEntry" "no such service entry"
@@ -212,16 +227,19 @@ getServiceEntry = withLock $ do
 
 foreign import ccall unsafe "getservent" c_getservent :: IO (Ptr ServiceEntry)
 
+-- | @setservent(3)@.
 setServiceEntry :: Bool -> IO ()
 setServiceEntry flg = withLock $ c_setservent (fromBool flg)
 
 foreign import ccall unsafe  "setservent" c_setservent :: CInt -> IO ()
 
+-- | @endservent(3)@.
 endServiceEntry :: IO ()
 endServiceEntry = withLock $ c_endservent
 
 foreign import ccall unsafe  "endservent" c_endservent :: IO ()
 
+-- | Retrieve list of all 'ServiceEntry' via @getservent(3)@.
 getServiceEntries :: Bool -> IO [ServiceEntry]
 getServiceEntries stayOpen = do
   setServiceEntry stayOpen
@@ -240,11 +258,12 @@ getServiceEntries stayOpen = do
 -- @/etc/protocols@, is to be kept open between calls of
 -- getProtocolEntry. Similarly,
 
+-- | Representation of the POSIX @protoent@ structure defined in [<netdb.h>](http://pubs.opengroup.org/onlinepubs/9699919799/basedefs/netdb.h.html).
 data ProtocolEntry =
   ProtocolEntry  {
-     protoName    :: ProtocolName,      -- Official Name
-     protoAliases :: [ProtocolName],    -- aliases
-     protoNumber  :: N.ProtocolNumber     -- Protocol Number
+     protoName    :: ProtocolName,      -- ^ Official name
+     protoAliases :: [ProtocolName],    -- ^ aliases
+     protoNumber  :: N.ProtocolNumber   -- ^ Protocol number
   } deriving (Read, Show, Typeable)
 
 instance Storable ProtocolEntry where
@@ -274,6 +293,7 @@ instance Storable ProtocolEntry where
    poke = throwUnsupportedOperationPoke "ProtocolEntry"
 
 
+-- | @getprotobyname(3)@.
 getProtocolByName :: ProtocolName -> IO ProtocolEntry
 getProtocolByName name = withLock $ do
  withCString name $ \ name_cstr -> do
@@ -284,7 +304,7 @@ getProtocolByName name = withLock $ do
 foreign import  CALLCONV unsafe  "getprotobyname"
    c_getprotobyname :: CString -> IO (Ptr ProtocolEntry)
 
-
+-- | @getprotobynumber(3)@.
 getProtocolByNumber :: N.ProtocolNumber -> IO ProtocolEntry
 getProtocolByNumber num = withLock $ do
  throwNoSuchThingIfNull "Network.BSD.getProtocolByNumber" ("no such protocol number: " ++ show num)
@@ -294,13 +314,14 @@ getProtocolByNumber num = withLock $ do
 foreign import CALLCONV unsafe  "getprotobynumber"
    c_getprotobynumber :: CInt -> IO (Ptr ProtocolEntry)
 
-
+-- | @getprotobyname(3)@.
 getProtocolNumber :: ProtocolName -> IO N.ProtocolNumber
 getProtocolNumber proto = do
  (ProtocolEntry _ _ num) <- getProtocolByName proto
  return num
 
 #if !defined(mingw32_HOST_OS)
+-- | @getprotoent(3)@.
 getProtocolEntry :: IO ProtocolEntry    -- Next Protocol Entry from DB
 getProtocolEntry = withLock $ do
  ent <- throwNoSuchThingIfNull "Network.BSD.getProtocolEntry" "no such protocol entry"
@@ -309,16 +330,19 @@ getProtocolEntry = withLock $ do
 
 foreign import ccall unsafe  "getprotoent" c_getprotoent :: IO (Ptr ProtocolEntry)
 
+-- | @setprotoent(3)@.
 setProtocolEntry :: Bool -> IO ()       -- Keep DB Open ?
 setProtocolEntry flg = withLock $ c_setprotoent (fromBool flg)
 
 foreign import ccall unsafe "setprotoent" c_setprotoent :: CInt -> IO ()
 
+-- | @endprotoent(3)@.
 endProtocolEntry :: IO ()
 endProtocolEntry = withLock $ c_endprotoent
 
 foreign import ccall unsafe "endprotoent" c_endprotoent :: IO ()
 
+-- | Retrieve list of all 'ProtocolEntry' via @getprotoent(3)@.
 getProtocolEntries :: Bool -> IO [ProtocolEntry]
 getProtocolEntries stayOpen = withLock $ do
   setProtocolEntry stayOpen
@@ -328,12 +352,13 @@ getProtocolEntries stayOpen = withLock $ do
 -- ---------------------------------------------------------------------------
 -- Host lookups
 
+-- | Representation of the POSIX @hostent@ structure defined in [<netdb.h>](http://pubs.opengroup.org/onlinepubs/9699919799/basedefs/netdb.h.html).
 data HostEntry =
   HostEntry  {
-     hostName      :: N.HostName,         -- Official Name
-     hostAliases   :: [N.HostName],       -- aliases
-     hostFamily    :: N.Family,           -- Host Type (currently AF_INET)
-     hostAddresses :: [N.HostAddress]     -- Set of Network Addresses  (in network byte order)
+     hostName      :: N.HostName,         -- ^ Official name of the host
+     hostAliases   :: [N.HostName],       -- ^ Alternative names of the host
+     hostFamily    :: N.Family,           -- ^ Address type (currently @AF_INET@)
+     hostAddresses :: [N.HostAddress]     -- ^ Set of network addresses for the host
   } deriving (Read, Show, Typeable)
 
 instance Storable HostEntry where
@@ -400,6 +425,7 @@ foreign import CALLCONV safe "gethostbyaddr"
    c_gethostbyaddr :: Ptr N.HostAddress -> CInt -> CInt -> IO (Ptr HostEntry)
 
 #if defined(HAVE_GETHOSTENT) && !defined(mingw32_HOST_OS)
+-- | @gethostent(3)@.
 getHostEntry :: IO HostEntry
 getHostEntry = withLock $ do
  throwNoSuchThingIfNull "Network.BSD.getHostEntry" "unable to retrieve host entry"
@@ -408,16 +434,19 @@ getHostEntry = withLock $ do
 
 foreign import ccall unsafe "gethostent" c_gethostent :: IO (Ptr HostEntry)
 
+-- | @sethostent(3)@.
 setHostEntry :: Bool -> IO ()
 setHostEntry flg = withLock $ c_sethostent (fromBool flg)
 
 foreign import ccall unsafe "sethostent" c_sethostent :: CInt -> IO ()
 
+-- | @endhostent(3)@.
 endHostEntry :: IO ()
 endHostEntry = withLock $ c_endhostent
 
 foreign import ccall unsafe "endhostent" c_endhostent :: IO ()
 
+-- | Retrieve list of all 'HostEntry' via @gethostent(3)@.
 getHostEntries :: Bool -> IO [HostEntry]
 getHostEntries stayOpen = do
   setHostEntry stayOpen
@@ -435,12 +464,13 @@ type NetworkAddr = CULong
 
 type NetworkName = String
 
+-- | Representation of the POSIX @netent@ structure defined in [<netdb.h>](http://pubs.opengroup.org/onlinepubs/9699919799/basedefs/netdb.h.html).
 data NetworkEntry =
   NetworkEntry {
-     networkName        :: NetworkName,   -- official name
-     networkAliases     :: [NetworkName], -- aliases
-     networkFamily      :: N.Family,         -- type
-     networkAddress     :: NetworkAddr
+     networkName        :: NetworkName,   -- ^ Official network name
+     networkAliases     :: [NetworkName], -- ^ aliases
+     networkFamily      :: N.Family,      -- ^ Network address type
+     networkAddress     :: NetworkAddr    -- ^ Network number
    } deriving (Read, Show, Typeable)
 
 instance Storable NetworkEntry where
@@ -465,6 +495,7 @@ instance Storable NetworkEntry where
 
 
 #if !defined(mingw32_HOST_OS)
+-- | @getnetbyname(3)@.
 getNetworkByName :: NetworkName -> IO NetworkEntry
 getNetworkByName name = withLock $ do
  withCString name $ \ name_cstr -> do
@@ -475,6 +506,7 @@ getNetworkByName name = withLock $ do
 foreign import ccall unsafe "getnetbyname"
    c_getnetbyname  :: CString -> IO (Ptr NetworkEntry)
 
+-- | @getnetbyaddr(3)@.
 getNetworkByAddr :: NetworkAddr -> N.Family -> IO NetworkEntry
 getNetworkByAddr addr family = withLock $ do
  throwNoSuchThingIfNull "Network.BSD.getNetworkByAddr" "no such network entry"
@@ -484,6 +516,7 @@ getNetworkByAddr addr family = withLock $ do
 foreign import ccall unsafe "getnetbyaddr"
    c_getnetbyaddr  :: NetworkAddr -> CInt -> IO (Ptr NetworkEntry)
 
+-- | @getnetent(3)@.
 getNetworkEntry :: IO NetworkEntry
 getNetworkEntry = withLock $ do
  throwNoSuchThingIfNull "Network.BSD.getNetworkEntry" "no more network entries"
@@ -495,18 +528,22 @@ foreign import ccall unsafe "getnetent" c_getnetent :: IO (Ptr NetworkEntry)
 -- | Open the network name database. The parameter specifies
 -- whether a connection is maintained open between various
 -- networkEntry calls
+--
+-- @setnetent(3)@.
 setNetworkEntry :: Bool -> IO ()
 setNetworkEntry flg = withLock $ c_setnetent (fromBool flg)
 
 foreign import ccall unsafe "setnetent" c_setnetent :: CInt -> IO ()
 
 -- | Close the connection to the network name database.
+--
+-- @endnetent(3)@.
 endNetworkEntry :: IO ()
 endNetworkEntry = withLock $ c_endnetent
 
 foreign import ccall unsafe "endnetent" c_endnetent :: IO ()
 
--- | Get the list of network entries.
+-- | Get the list of network entries via @getnetent(3)@.
 getNetworkEntries :: Bool -> IO [NetworkEntry]
 getNetworkEntries stayOpen = do
   setNetworkEntry stayOpen
@@ -525,9 +562,10 @@ withLock act = withMVar lock (\_ -> act)
 -- ---------------------------------------------------------------------------
 -- Miscellaneous Functions
 
--- | Calling getHostName returns the standard host name for the current
+-- | Calling 'getHostName' returns the standard host name for the current
 -- processor, as set at boot time.
-
+--
+-- @gethostname(2)@.
 getHostName :: IO N.HostName
 getHostName = do
   let size = 256

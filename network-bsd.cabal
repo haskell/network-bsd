@@ -22,9 +22,12 @@ description:
   I.e. you can control the version of the @network@ package
   independently.
   .
-  __NOTE__: Starting with version @network-bsd-2.8.1.0@ this package
-  requires @network >= 3@ in order to avoid module name clashes with
-  @network < 3@'s "Network.BSD" module.
+  __NOTE__: Starting with @network-bsd-2.8.1.0@ the APIs of @network@
+  and @network-bsd@ evolve differently, and consequently the
+  versioning doesn't match up anymore! Moreover, also starting with
+  version @network-bsd-2.8.1.0@ this package requires @network >= 3@
+  in order to avoid module name clashes with @network < 3@'s
+  "Network.BSD" module.
   .
   However, @network-bsd-2.7.0.0@ and @network-bsd-2.8.0.0@ passes thru
   the "Network.BSD" module from @network-2.7.*@ and @network-2.8.*@
