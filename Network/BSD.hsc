@@ -1,4 +1,4 @@
-{-# LANGUAGE CPP, NondecreasingIndentation #-}
+{-# LANGUAGE CPP, NondecreasingIndentation, DeriveDataTypeable #-}
 
 -----------------------------------------------------------------------------
 -- |
