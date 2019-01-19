@@ -35,6 +35,8 @@ module Network.BSD
     -- * Host names and network addresses
       N.HostName
     , N.HostAddress
+      -- NB: We're explicit here to reduce the risk of inadvertently leaking through new constructors w/o reflecting this in @network-bsd@'s API version
+    , N.Family(AF_UNSPEC, AF_UNIX, AF_INET, AF_INET6, AF_IMPLINK, AF_PUP, AF_CHAOS, AF_NS, AF_NBS, AF_ECMA, AF_DATAKIT, AF_CCITT, AF_SNA, AF_DECnet, AF_DLI, AF_LAT, AF_HYLINK, AF_APPLETALK, AF_ROUTE, AF_NETBIOS, AF_NIT, AF_802, AF_ISO, AF_OSI, AF_NETMAN, AF_X25, AF_AX25, AF_OSINET, AF_GOSSIP, AF_IPX, Pseudo_AF_XTP, AF_CTF, AF_WAN, AF_SDL, AF_NETWARE, AF_NDD, AF_INTF, AF_COIP, AF_CNT, Pseudo_AF_RTIP, Pseudo_AF_PIP, AF_SIP, AF_ISDN, Pseudo_AF_KEY, AF_NATM, AF_ARP, Pseudo_AF_HDRCMPLT, AF_ENCAP, AF_LINK, AF_RAW, AF_RIF, AF_NETROM, AF_BRIDGE, AF_ATMPVC, AF_ROSE, AF_NETBEUI, AF_SECURITY, AF_PACKET, AF_ASH, AF_ECONET, AF_ATMSVC, AF_IRDA, AF_PPPOX, AF_WANPIPE, AF_BLUETOOTH, AF_CAN)
     , getHostName
 
     , HostEntry(..)
@@ -54,6 +56,7 @@ module Network.BSD
     -- * Service names
     , ServiceEntry(..)
     , N.ServiceName
+    , N.PortNumber
     , getServiceByName
     , getServiceByPort
     , getServicePortNumber
@@ -83,9 +86,6 @@ module Network.BSD
     , getProtocolEntry
     , endProtocolEntry
 #endif
-
-    -- * Port numbers
-    , N.PortNumber
 
     -- * Network names
     , NetworkName
