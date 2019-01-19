@@ -1,4 +1,4 @@
-{-# LANGUAGE CPP, NondecreasingIndentation, DeriveDataTypeable #-}
+{-# LANGUAGE CPP, NondecreasingIndentation, DeriveDataTypeable, BangPatterns #-}
 
 -----------------------------------------------------------------------------
 -- |
@@ -126,6 +126,7 @@ import System.IO.Unsafe (unsafePerformIO)
 
 import GHC.IO.Exception
 
+import Control.DeepSeq (NFData(rnf))
 import Control.Monad (liftM)
 
 import Network.Socket.Internal (throwSocketErrorIfMinus1_)
@@ -157,6 +158,11 @@ data ServiceEntry  =
      servicePort     :: N.PortNumber,     -- ^ Port Number
      serviceProtocol :: ProtocolName      -- ^ Protocol to use
   } deriving (Show, Typeable)
+
+-- | @since 2.8.1.0
+instance NFData ServiceEntry where
+   -- TODO: PortNumber is a newtype over Word16; add NFData instance to `network`
+   rnf (ServiceEntry n a !_pn pr) = rnf (n,a,pr)
 
 instance Storable ServiceEntry where
    sizeOf    _ = #const sizeof(struct servent)
@@ -266,6 +272,11 @@ data ProtocolEntry =
      protoNumber  :: N.ProtocolNumber   -- ^ Protocol number
   } deriving (Read, Show, Typeable)
 
+-- | @since 2.8.1.0
+instance NFData ProtocolEntry where
+   -- NB: deepseq-1.3 didn't have `NFData CInt` yet; but we don't need it
+   rnf (ProtocolEntry na a !_nu) = rnf (na,a)
+
 instance Storable ProtocolEntry where
    sizeOf    _ = #const sizeof(struct protoent)
    alignment _ = alignment (undefined :: CInt) -- ???
@@ -360,6 +371,11 @@ data HostEntry =
      hostFamily    :: N.Family,           -- ^ Address type (currently @AF_INET@)
      hostAddresses :: [N.HostAddress]     -- ^ Set of network addresses for the host
   } deriving (Read, Show, Typeable)
+
+-- | @since 2.8.1.0
+instance NFData HostEntry where
+   -- TODO: NFData N.Family
+   rnf (HostEntry n al !_f ad) = rnf (n,al,ad)
 
 instance Storable HostEntry where
    sizeOf    _ = #const sizeof(struct hostent)
@@ -472,6 +488,11 @@ data NetworkEntry =
      networkFamily      :: N.Family,      -- ^ Network address type
      networkAddress     :: NetworkAddr    -- ^ Network number
    } deriving (Read, Show, Typeable)
+
+-- | @since 2.8.1.0
+instance NFData NetworkEntry where
+   -- NB: We avoid relying on the `NFData CULong` instance which isn't available in deepseq-1.3 yet
+   rnf (NetworkEntry n al !_f !_ad) = rnf (n,al)
 
 instance Storable NetworkEntry where
    sizeOf    _ = #const sizeof(struct hostent)
