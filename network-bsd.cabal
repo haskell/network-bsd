@@ -7,7 +7,7 @@ maintainer:     Kazu Yamamoto, Herbert Valerio Riedel
 synopsis:       POSIX network database (<netdb.h>) API
 description:
   This package provides Haskell bindings to the
-  the [POSIX network database (<netdb.h>) API](http://pubs.opengroup.org/onlinepubs/009696699/basedefs/netdb.h.html).
+  the [POSIX network database (<netdb.h>) API](http://pubs.opengroup.org/onlinepubs/9699919799/basedefs/netdb.h.html).
   .
   === Relationship to the @network@ package
   .
